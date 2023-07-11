@@ -1,127 +1,97 @@
-#include <stdlib.h>
 #include "main.h"
+#include <stdlib.h>
+
+void util(char **, char *);
+void create_word(char **, char *, int, int, int);
 
 /**
- * count_word - helper function to count the number of words in a string
- * @s: string to evaluate
- * Return: number of words
- */
-int count_word(char *s)
-{
-	int flag, c, w;
-
-	flag = 0;
-	w = 0;
-
-	for (c = 0; s[c] != '\0'; c++)
-	{
-		if (s[c] == ' ')
-			flag = 0;
-		else if (flag == 0)
-		{
-			flag = 1;
-			w++;
-		}
-	}
-
-	return (w);
-}
-
-/**
- * allocate_matrix - allocates memory for the matrix
- * @words: number of words
- * Return: pointer to the allocated matrix
- */
-char **allocate_matrix(int words)
-{
-	char **matrix;
-
-	matrix = malloc(sizeof(char *) * (words + 1));
-	if (matrix == NULL)
-		return (NULL);
-
-	return (matrix);
-}
-
-/**
- * copy_word - copies a word from the string to a new memory location
- * @start: starting index of the word
- * @end: ending index of the word
- * @str: string containing the words
- * Return: pointer to the copied word
- */
-char *copy_word(int start, int end, char *str)
-{
-	char *word;
-	int i, length = end - start;
-
-	word = malloc(sizeof(char) * (length + 1));
-	if (word == NULL)
-		return (NULL);
-
-	for (i = 0; start < end; i++, start++)
-		word[i] = str[start];
-
-	word[i] = '\0';
-
-	return (word);
-}
-
-/**
- * fill_matrix - fills the matrix with words from the string
- * @matrix: matrix to fill
- * @str: string containing the words
- * @words: number of words
- */
-void fill_matrix(char **matrix, char *str, int words)
-{
-	int i, k = 0, len = 0, c = 0, start, end;
-
-	for (i = 0; str[i]; i++)
-		len++;
-
-	for (i = 0; i <= len; i++)
-	{
-		if (str[i] == ' ' || str[i] == '\0')
-		{
-			if (c)
-			{
-				end = i;
-				matrix[k] = copy_word(start, end, str);
-				k++;
-				c = 0;
-			}
-		}
-		else if (c++ == 0)
-			start = i;
-	}
-
-	matrix[k] = NULL;
-}
-
-/**
- * strtow - splits a string into words
- * @str: string to split
- * Return: pointer to an array of strings (Success) or NULL (Error)
+ * strtow - Splits a string into words.
+ * @str: The string to split.
+ *
+ * Return: Returns a pointer to an array of strings (words).
  */
 char **strtow(char *str)
 {
-	char **matrix;
-	int words;
+	int i, flag, len;
+	char **words;
 
-	if (str == NULL || *str == '\0')
+	if (str == NULL || str[0] == '\0' || (str[0] == ' ' && str[1] == '\0'))
 		return (NULL);
 
-	words = count_word(str);
+	i = flag = len = 0;
+	while (str[i])
+	{
+		if (flag == 0 && str[i] != ' ')
+			flag = 1;
+		if (i > 0 && str[i] == ' ' && str[i - 1] != ' ')
+		{
+			flag = 0;
+			len++;
+		}
+		i++;
+	}
 
-	if (words == 0)
+	len += flag == 1 ? 1 : 0;
+	if (len == 0)
 		return (NULL);
 
-	matrix = allocate_matrix(words);
-	if (matrix == NULL)
+	words = (char **)malloc(sizeof(char *) * (len + 1));
+	if (words == NULL)
 		return (NULL);
 
-	fill_matrix(matrix, str, words);
+	util(words, str);
+	words[len] = NULL;
+	return (words);
+}
 
-	return (matrix);
+/**
+ * util - A utility function for fetching words into an array.
+ * @words: The strings array.
+ * @str: The string.
+ */
+void util(char **words, char *str)
+{
+	int i, j, start, flag;
+
+	i = j = flag = 0;
+	while (str[i])
+	{
+		if (flag == 0 && str[i] != ' ')
+		{
+			start = i;
+			flag = 1;
+		}
+
+		if (i > 0 && str[i] == ' ' && str[i - 1] != ' ')
+		{
+			create_word(words, str, start, i, j);
+			j++;
+			flag = 0;
+		}
+
+		i++;
+	}
+
+	if (flag == 1)
+		create_word(words, str, start, i, j);
+}
+
+/**
+ * create_word - Creates a word and inserts it into the array.
+ * @words: The array of strings.
+ * @str: The string.
+ * @start: The starting index of the word.
+ * @end: The stopping index of the word.
+ * @index: The index of the array to insert the word.
+ */
+void create_word(char **words, char *str, int start, int end, int index)
+{
+	int i, j;
+
+	i = end - start;
+	words[index] = (char *)malloc(sizeof(char) * (i + 1));
+
+	for (j = 0; start < end; start++, j++)
+		words[index][j] = str[start];
+	words[index][j] = '\0';
 }
